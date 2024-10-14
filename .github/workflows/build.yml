@@ -26,7 +26,12 @@ jobs:
             echo "Error during docker-compose build"
             exit 1
           fi
-          docker tag weather-app:latest ayakayu/weather-app:1.0.0
+          IMAGE_ID=$(docker images -q final-project_weather-app)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "Error: Image not found"
+            exit 1
+          fi
+          docker tag $IMAGE_ID ayakayu/weather-app:1.0.0
           docker push ayakayu/weather-app:1.0.0
       - name: Logout from Docker Hub 
         run: docker logout
