@@ -39,3 +39,6 @@ Thumbs.db
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Nginx files
+nginx.conf
