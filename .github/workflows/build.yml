@@ -41,13 +41,13 @@ jobs:
     needs: build
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: docker-image
       - name: Setup Ansible
-        uses: ansible/ansible-runner@v1
+        uses: ansible/ansible-runner@v2
       - name: Run Ansible playbook
-        uses: ansible/ansible-runner@v1
+        uses: ansible/ansible-runner@v2
         with:
           playbook: deploy.yml
           inventory: hosts.ini
