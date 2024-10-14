@@ -12,13 +12,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Install Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
+
       - name: Login to Docker Hub 
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Build Docker Image
         run: |
           docker-compose build
@@ -32,27 +35,39 @@ jobs:
             exit 1
           fi
           docker tag $IMAGE_ID ayakayu/weather-app:1.0.0
+          docker save -o weather-app.tar ayakayu/weather-app:1.0.0
           docker push ayakayu/weather-app:1.0.0
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-image
+          path: weather-app.tar
+
       - name: Logout from Docker Hub 
         run: docker logout
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           name: docker-image
-      - name: Setup Ansible
-        uses: ansible/ansible-runner@v2
+          path: /tmp
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
       - name: Run Ansible playbook
-        uses: ansible/ansible-runner@v2
-        with:
-          playbook: deploy.yml
-          inventory: hosts.ini
-          extra-vars: |
-            DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-            IMAGE_NAME: ayakayu/weather-app:1.0.0
-            CONTAINER_NAME: my-weather-app
+        run: |
+          ansible-playbook -i "localhost," -c local deploy.yml
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_NAME: ayakayu/weather-app:1.0.0
+          CONTAINER_NAME: my-weather-app
