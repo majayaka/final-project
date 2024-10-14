@@ -72,7 +72,7 @@ jobs:
 
       - name: Run Ansible playbook
         run: |
-          ansible-playbook -i "localhost," -c local deploy.yml
+          ansible-playbook -i "localhost," -c local ./deploy.yml
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
