@@ -27,4 +27,4 @@ jobs:
           docker tag weather-app:latest ayakayu/weather-app:1.0.0
           docker push ayakayu/weather-app:1.0.0
       - name: Logout from Docker Hub
-        uses: docker/logout-action@v1
+        run: docker logout 
