@@ -8,24 +8,24 @@
 
     - name: Docker login
       community.docker.docker_login:
-        username: "{{ DOCKER_USERNAME }}"
-        password: "{{ DOCKER_PASSWORD }}"
+        username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
+        password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
 
     - name: Docker push
       community.docker.docker_image:
-        name: "{{ IMAGE_NAME }}"
+        name: "{{ lookup('env', 'IMAGE_NAME') }}"
         source: local
         force: yes
 
     - name: Docker pull
       community.docker.docker_image:
-        name: "{{ IMAGE_NAME }}"
+        name: "{{ lookup('env', 'IMAGE_NAME') }}"
         source: registry
 
     - name: Docker run
       community.docker.docker_container:
-        name: "{{ CONTAINER_NAME }}"
-        image: "{{ IMAGE_NAME }}"
+        name: "{{ lookup('env', 'CONTAINER_NAME') }}"
+        image: "{{ lookup('env', 'IMAGE_NAME') }}"
         restart: always
         state: started
         ports:
