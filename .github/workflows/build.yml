@@ -39,7 +39,7 @@ jobs:
           docker push ayakayu/weather-app:1.0.0
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: docker-image
           path: weather-app.tar
@@ -62,6 +62,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ansible
+
+      - name: Install Ansible Docker collection
+        run: |
+          ansible-galaxy collection install community.docker
 
       - name: Run Ansible playbook
         run: |
