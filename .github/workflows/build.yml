@@ -7,13 +7,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: centos-latest  
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Install Docker Compose 
-        run: sudo yum update && sudo yum install -y docker-compose # yum に変更
+      - name: Install Docker Compose (CentOS)
+        run: sudo yum update && sudo yum install -y docker-compose
       - name: Login to Docker Hub 
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
