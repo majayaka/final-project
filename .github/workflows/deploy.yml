@@ -1,0 +1,25 @@
+- hosts: localhost
+  become: true
+  tasks:
+    - name: Docker login
+      docker_login:
+        username: "{{ DOCKER_USERNAME }}"
+        password: "{{ DOCKER_PASSWORD }}"
+    - name: Docker push
+      docker_image:
+        path: ./{{ IMAGE_NAME }}
+        name: "{{ IMAGE_NAME }}"
+        source: local
+        force: yes
+    - name: Docker pull
+      docker_image:
+        name: "{{ IMAGE_NAME }}"
+        source: registry
+    - name: Docker run
+      docker_container:
+        name: "{{ CONTAINER_NAME }}"
+        image: "{{ IMAGE_NAME }}"
+        restart: always
+        state: started
+    - name: Docker logout
+      docker_logout:
