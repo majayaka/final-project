@@ -7,30 +7,30 @@
         cmd: docker load -i /tmp/weather-app.tar
 
     - name: Docker login
-      community.docker.docker_login:
-        username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
-        password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
+      docker_login:
+        username: "{{ DOCKER_USERNAME }}" 
+        password: "{{ DOCKER_PASSWORD }}"
 
     - name: Docker push
-      community.docker.docker_image:
-        name: "{{ lookup('env', 'IMAGE_NAME') }}"
+      docker_image:
+        path: ./{{ IMAGE_NAME }}
+        name: "{{ IMAGE_NAME }}"
         source: local
         force: yes
 
     - name: Docker pull
-      community.docker.docker_image:
-        name: "{{ lookup('env', 'IMAGE_NAME') }}"
+      docker_image:
+        name: "{{ IMAGE_NAME }}"
         source: registry
 
     - name: Docker run
-      community.docker.docker_container:
-        name: "{{ lookup('env', 'CONTAINER_NAME') }}"
-        image: "{{ lookup('env', 'IMAGE_NAME') }}"
+      docker_container:
+        name: "{{ CONTAINER_NAME }}"
+        image: "{{ IMAGE_NAME }}"
         restart: always
         state: started
         ports:
           - "3000:3000"
 
     - name: Docker logout
-      ansible.builtin.command:
-        cmd: docker logout
+      docker_logout:

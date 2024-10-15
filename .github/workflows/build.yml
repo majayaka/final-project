@@ -71,10 +71,12 @@ jobs:
           ansible-galaxy collection install community.docker
 
       - name: Run Ansible playbook
-        run: |
-          ansible-playbook -i "localhost," -c local ./deploy.yml
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        uses: ansible/ansible-runner@v2
+        with:
+         playbook: deploy.yml
+         inventory: hosts.ini
+         extra-vars: |
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # 変数名と値を確認
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           IMAGE_NAME: ayakayu/weather-app:1.0.0
           CONTAINER_NAME: my-weather-app
