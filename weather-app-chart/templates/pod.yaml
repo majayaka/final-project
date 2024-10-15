@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.pod.name }}
+spec:
+  containers:
+  - name: {{ .Values.app.name }}
+    image: {{ .Values.app.image }}
+    volumeMounts:
+    - mountPath: "/data"
+      name: weather-app-storage
+  volumes:
+  - name: weather-app-storage
+    persistentVolumeClaim:
+      claimName: {{ .Values.pvc.name }}

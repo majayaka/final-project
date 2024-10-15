@@ -1,0 +1,28 @@
+---
+- name: Deploy and manage K3s resources
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Ensure backup directory exists
+      file:
+        path: /var/lib/rancher/k3s/server/backup
+        state: directory
+        mode: '0755'
+
+    - name: Create backup script
+      copy:
+        dest: /usr/local/bin/k3s-backup.sh
+        content: |
+          #!/bin/bash
+          BACKUP_DIR="/var/lib/rancher/k3s/server/backup"
+          DATE=$(date +%Y%m%d%H%M%S)
+          sudo k3s etcd-snapshot save --name snapshot-$DATE
+          sudo mv /var/lib/rancher/k3s/server/db/snapshots/snapshot-$DATE $BACKUP_DIR
+        mode: '0755'
+
+    - name: Schedule backup script with cron
+      cron:
+        name: "K3s backup"
+        minute: "0"
+        hour: "0"
+        job: "sudo /usr/local/bin/k3s-backup.sh"

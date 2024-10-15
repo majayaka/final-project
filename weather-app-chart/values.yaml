@@ -1,0 +1,37 @@
+app:
+  name: weather-app
+  replicas: 3
+  image: ayakayu/weather-app:1.0.0
+  containerPort: 3000
+
+service:
+  name: weather-app-service
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+
+ingress:
+  name: weather-app-ingress
+  clusterIssuer: letsencrypt-prod
+  host: finalexam.ayaka-m.cloudns.biz
+  secretName: weather-app-tls
+
+pvc:
+  name: weather-app-pvc
+  storage: 10Gi
+  storageClassName: local-path
+
+hpa:
+  name: weather-app-hpa
+  minReplicas: 3
+  maxReplicas: 6
+  averageUtilization: 70
+
+pod:
+  name: weather-app-pod
+
+clusterIssuer:
+  name: letsencrypt-prod
+  server: https://acme-v02.api.letsencrypt.org/directory
+  email: yumotoayaka@gmail.com
+  privateKeySecretRef: letsencrypt-prod

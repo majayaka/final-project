@@ -12,26 +12,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
+
       - name: Login to Docker Hub 
         run: |
           echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
       - name: Build Docker Image
         run: |
-          docker-compose build
+          # Use Dockerfile
+          docker build -t ayakayu/weather-app:1.0.0 .
           if [ $? -ne 0 ]; then
-            echo "Error during docker-compose build"
+            echo "Error during docker build"
             exit 1
           fi
-          IMAGE_ID=$(docker images -q final-project_weather-app)
-          if [ -z "$IMAGE_ID" ]; then
-            echo "Error: Image not found"
-            exit 1
-          fi
-          docker tag $IMAGE_ID ayakayu/weather-app:1.0.0
+
+          # Push builded image
           docker push ayakayu/weather-app:1.0.0
+
       - name: Logout from Docker Hub 
         run: docker logout
