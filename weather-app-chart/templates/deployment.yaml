@@ -17,3 +17,9 @@ spec:
         image: {{ .Values.app.image }}
         ports:
         - containerPort: {{ .Values.app.containerPort }}
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.apiKeySecretName }} 
+              key: API_KEY 

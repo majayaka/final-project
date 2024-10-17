@@ -5,6 +5,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
 spec:
+  ingressClassName: {{ .Values.ingress.ingressClass }}
   rules:
   - host: {{ .Values.ingress.host }}
     http:
@@ -20,3 +21,4 @@ spec:
   - hosts:
     - {{ .Values.ingress.host }}
     secretName: {{ .Values.ingress.secretName }}
+    

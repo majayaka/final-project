@@ -15,6 +15,7 @@ ingress:
   clusterIssuer: letsencrypt-prod
   host: finalexam.ayaka-m.cloudns.biz
   secretName: weather-app-tls
+  ingressClass: traefik
 
 pvc:
   name: weather-app-pvc
@@ -35,3 +36,6 @@ clusterIssuer:
   server: https://acme-v02.api.letsencrypt.org/directory
   email: yumotoayaka@gmail.com
   privateKeySecretRef: letsencrypt-prod
+
+secrets:
+  apiKeySecretName: weather-app-secret
