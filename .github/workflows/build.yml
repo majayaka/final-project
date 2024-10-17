@@ -44,6 +44,7 @@ jobs:
 
       - name: Authenticate with k3s cluster
         run: |
+          mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
