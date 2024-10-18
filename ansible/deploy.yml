@@ -8,7 +8,7 @@
 
     # Deploy the weather-app Helm chart
     - name: Deploy weather-app-chart using Helm
-      shell: helm upgrade weather-app-chart ./weather-app-chart --install --namespace default
+      shell: helm upgrade weather-app-chart /root/final-project/final-project/weather-app-chart --install --namespace default
 
     # Ensure backup directory exists
     - name: Ensure backup directory exists
