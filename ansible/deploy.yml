@@ -1,14 +1,23 @@
 ---
-- name: Deploy and manage K3s resources
-  hosts: localhost
-  become: true
+- hosts: k3s
+  become: yes
   tasks:
+    # Ensure Helm is installed
+    - name: Install Helm
+      shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+    # Deploy the weather-app Helm chart
+    - name: Deploy weather-app-chart using Helm
+      shell: helm upgrade weather-app-chart ./weather-app-chart --install --namespace default
+
+    # Ensure backup directory exists
     - name: Ensure backup directory exists
       file:
         path: /var/lib/rancher/k3s/server/backup
         state: directory
         mode: '0755'
 
+    # Create backup script
     - name: Create backup script
       copy:
         dest: /usr/local/bin/k3s-backup.sh
@@ -20,6 +29,7 @@
           sudo mv /var/lib/rancher/k3s/server/db/snapshots/snapshot-$DATE $BACKUP_DIR
         mode: '0755'
 
+    # Schedule the backup script using cron
     - name: Schedule backup script with cron
       cron:
         name: "K3s backup"
