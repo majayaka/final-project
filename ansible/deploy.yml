@@ -2,13 +2,60 @@
 - hosts: k3s
   become: yes
   tasks:
-    # Ensure Helm is installed
+    # Check if Helm is installed
+    - name: Check if Helm is installed
+      command: helm version
+      register: check_helm_installed
+      ignore_errors: yes
+
+    # Install Helm if not installed
     - name: Install Helm
       shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      when: check_helm_installed.failed
 
-    # Deploy the weather-app Helm chart
-    - name: Deploy weather-app-chart using Helm
-      shell: helm upgrade weather-app-chart /root/final-project/final-project/weather-app-chart --install --namespace default
+    # Check if staging namespace exists
+    - name: Check if staging namespace exists
+      command: kubectl get namespace staging
+      register: check_staging_namespace
+      ignore_errors: yes
+
+    # Create staging namespace if not exists
+    - name: Create staging namespace
+      command: kubectl create namespace staging
+      when: check_staging_namespace.failed
+
+    # Check if prod namespace exists
+    - name: Check if prod namespace exists
+      command: kubectl get namespace prod
+      register: check_prod_namespace
+      ignore_errors: yes
+
+    # Create prod namespace if not exists
+    - name: Create prod namespace
+      command: kubectl create namespace prod
+      when: check_prod_namespace.failed
+
+    # Deploy the weather-app Helm chart to staging
+    - name: Deploy weather-app-chart to staging using Helm
+      shell: helm upgrade --install weather-app-chart /root/final-project/final-project/weather-app-chart --namespace staging
+      register: helm_staging_result
+
+    # Fail task if Helm chart deployment to staging fails
+    - name: Check Helm deployment result for staging
+      fail:
+        msg: "Helm deployment for staging failed"
+      when: helm_staging_result.rc != 0
+
+    # Deploy the weather-app Helm chart to prod
+    - name: Deploy weather-app-chart to prod using Helm
+      shell: helm upgrade --install weather-app-chart /root/final-project/final-project/weather-app-chart --namespace prod
+      register: helm_prod_result
+
+    # Fail task if Helm chart deployment to prod fails
+    - name: Check Helm deployment result for prod
+      fail:
+        msg: "Helm deployment for prod failed"
+      when: helm_prod_result.rc != 0
 
     # Ensure backup directory exists
     - name: Ensure backup directory exists
@@ -26,7 +73,12 @@
           BACKUP_DIR="/var/lib/rancher/k3s/server/backup"
           DATE=$(date +%Y%m%d%H%M%S)
           sudo k3s etcd-snapshot save --name snapshot-$DATE
-          sudo mv /var/lib/rancher/k3s/server/db/snapshots/snapshot-$DATE $BACKUP_DIR
+          if [ $? -eq 0 ]; then
+            sudo mv /var/lib/rancher/k3s/server/db/snapshots/snapshot-$DATE $BACKUP_DIR
+            echo "Backup successful: $BACKUP_DIR/snapshot-$DATE"
+          else
+            echo "Backup failed" >&2
+          fi
         mode: '0755'
 
     # Schedule the backup script using cron
