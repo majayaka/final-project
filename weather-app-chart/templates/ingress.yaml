@@ -2,23 +2,31 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.ingress.name }}
+  namespace: {{ .Values.ingress.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer }}
+    kubernetes.io/ingress.class: nginx
 spec:
-  ingressClassName: {{ .Values.ingress.ingressClass }}
-  rules:
-  - host: {{ .Values.ingress.host }}
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Values.service.name }}
-            port:
-              number: {{ .Values.service.port }}
+  ingressClassName: nginx
   tls:
-  - hosts:
-    - {{ .Values.ingress.host }}
-    secretName: {{ .Values.ingress.secretName }}
-    
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.secretName | quote }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /.well-known/acme-challenge
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: cm-acme-http-solver-{{ .Release.Name }}
+                port:
+                  number: 8089
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.service.name }}
+                port:
+                  number: 80

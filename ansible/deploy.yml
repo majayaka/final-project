@@ -2,6 +2,17 @@
 - hosts: k3s
   become: yes
   tasks:
+    # k3s server status check
+    - name: Check if k3s server is running
+      command: systemctl is-active k3s
+      register: check_k3s_running
+      ignore_errors: yes
+
+    - name: Fail if k3s server is not running
+      fail:
+        msg: "k3s server is not running. Please start the k3s server."
+      when: check_k3s_running.rc != 0
+
     # Check if Helm is installed
     - name: Check if Helm is installed
       command: helm version

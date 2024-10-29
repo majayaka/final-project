@@ -30,6 +30,20 @@ jobs:
           docker push ayakayu/weather-app:1.0.0
 
       - name: Logout from Docker Hub 
-        run: docker logout
+        run: docker logout        
       
-      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Deploy to k3s
+        run: |
+          ansible-playbook -i ./ansible/hosts.ini ./ansible/deploy.yml
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
