@@ -2,7 +2,13 @@
 - hosts: k3s
   become: yes
   tasks:
-    # k3s server status check
+    # Install k3s using the official install script
+    - name: Install k3s
+      ansible.builtin.shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        executable: /bin/bash
+
+    # Check if k3s server is running
     - name: Check if k3s server is running
       command: systemctl is-active k3s
       register: check_k3s_running
@@ -13,71 +19,69 @@
         msg: "k3s server is not running. Please start the k3s server."
       when: check_k3s_running.rc != 0
 
-    # Check if Helm is installed
-    - name: Check if Helm is installed
-      command: helm version
-      register: check_helm_installed
-      ignore_errors: yes
-
     # Install Helm if not installed
     - name: Install Helm
-      shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-      when: check_helm_installed.failed
+      ansible.builtin.shell: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+      args:
+        executable: /bin/bash
 
-    # Check if staging namespace exists
-    - name: Check if staging namespace exists
-      command: kubectl get namespace staging
-      register: check_staging_namespace
+    # Restart cert-manager-webhook deployment
+    - name: Restart cert-manager-webhook
+      ansible.builtin.shell: |
+        kubectl rollout restart deployment cert-manager-webhook -n cert-manager
+      register: cert_manager_rollout
       ignore_errors: yes
 
-    # Create staging namespace if not exists
-    - name: Create staging namespace
-      command: kubectl create namespace staging
-      when: check_staging_namespace.failed
-
-    # Check if prod namespace exists
-    - name: Check if prod namespace exists
-      command: kubectl get namespace prod
-      register: check_prod_namespace
+    - name: Wait for cert-manager-webhook to be available
+      ansible.builtin.command: kubectl rollout status deployment cert-manager-webhook -n cert-manager
+      when: cert_manager_rollout is success
+      retries: 5
+      delay: 15
       ignore_errors: yes
 
-    # Create prod namespace if not exists
-    - name: Create prod namespace
-      command: kubectl create namespace prod
-      when: check_prod_namespace.failed
+    # Remove existing conflicting resources
+    - name: Remove conflicting resources from previous releases
+      ansible.builtin.shell: |
+        kubectl delete ingress nginx-ingress --namespace prod --ignore-not-found
+        kubectl delete secret nginx-app-tls --namespace prod --ignore-not-found
+        kubectl delete pvc nginx-ingress-pvc --namespace prod --ignore-not-found
+      ignore_errors: yes
 
-    # Deploy the weather-app Helm chart to staging
-    - name: Deploy weather-app-chart to staging using Helm
-      shell: helm upgrade --install weather-app-chart /root/final-project/final-project/weather-app-chart --namespace staging
-      register: helm_staging_result
+    # Ensure namespaces exist
+    - name: Ensure namespaces exist
+      ansible.builtin.command:
+        cmd: kubectl create namespace {{ item }}
+        creates: /tmp/{{ item }}-namespace
+      loop:
+        - staging
+        - prod
+      register: namespace_creation
+      ignore_errors: yes
 
-    # Fail task if Helm chart deployment to staging fails
-    - name: Check Helm deployment result for staging
+    # Deploy the weather-app Helm chart to both namespaces
+    - name: Deploy weather-app-chart using Helm
+      shell: helm upgrade --install weather-app-chart /root/final-project/final-project/weather-app-chart --namespace {{ item }}
+      loop:
+        - staging
+        - prod
+      register: helm_result
+
+    # Fail task if Helm chart deployment fails
+    - name: Check Helm deployment result
       fail:
-        msg: "Helm deployment for staging failed"
-      when: helm_staging_result.rc != 0
-
-    # Deploy the weather-app Helm chart to prod
-    - name: Deploy weather-app-chart to prod using Helm
-      shell: helm upgrade --install weather-app-chart /root/final-project/final-project/weather-app-chart --namespace prod
-      register: helm_prod_result
-
-    # Fail task if Helm chart deployment to prod fails
-    - name: Check Helm deployment result for prod
-      fail:
-        msg: "Helm deployment for prod failed"
-      when: helm_prod_result.rc != 0
+        msg: "Helm deployment for {{ item }} failed"
+      when: helm_result.rc != 0
 
     # Ensure backup directory exists
     - name: Ensure backup directory exists
-      file:
+      ansible.builtin.file:
         path: /var/lib/rancher/k3s/server/backup
         state: directory
         mode: '0755'
 
     # Create backup script
     - name: Create backup script
-      copy:
+      ansible.builtin.copy:
         dest: /usr/local/bin/k3s-backup.sh
         content: |
           #!/bin/bash
@@ -94,7 +98,7 @@
 
     # Schedule the backup script using cron
     - name: Schedule backup script with cron
-      cron:
+      ansible.builtin.cron:
         name: "K3s backup"
         minute: "0"
         hour: "0"
