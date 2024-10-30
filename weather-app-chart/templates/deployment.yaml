@@ -23,3 +23,18 @@ spec:
             secretKeyRef:
               name: {{ .Values.secrets.apiKeySecretName }}
               key: API_KEY
+        volumeMounts:
+        - name: nginx-tls
+          mountPath: /etc/ssl/certs/tls.crt
+          subPath: tls.crt
+          readOnly: true
+        - name: nginx-tls-key
+          mountPath: /etc/ssl/private/tls.key
+          subPath: tls.key
+      volumes:
+      - name: nginx-tls
+        secret:
+          secretName: {{ .Values.ingress.secretName }}  
+      - name: nginx-tls-key
+        secret:
+          secretName: {{ .Values.ingress.secretName }} 

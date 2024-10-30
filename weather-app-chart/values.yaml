@@ -1,7 +1,7 @@
 app:
   name: nginx-app
   replicas: 2
-  image: ayakayu/weather-app:1.0.0
+  image: ayakayu/weather-app-nginx:1.0.0
   containerPort: 3000
 
 service:
@@ -62,3 +62,25 @@ certificates:
   dnsNames:
     - finalexam.ayaka-m.cloudns.biz
   secretName: nginx-app-tls
+
+volumes:
+  - name: nginx-tls
+    secret:
+      secretName: nginx-app-tls
+      items:
+        - key: tls.crt
+          path: tls.crt
+  - name: nginx-tls-key
+    secret:
+      secretName: nginx-app-tls
+      items:
+        - key: tls.key
+          path: tls.key
+
+volumeMounts:
+  - name: nginx-tls
+    mountPath: /etc/ssl/certs
+    readOnly: true
+  - name: nginx-tls-key
+    mountPath: /etc/ssl/private
+    readOnly: true
