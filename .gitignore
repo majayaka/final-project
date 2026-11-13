@@ -42,3 +42,13 @@ Thumbs.db
 
 # Nginx files
 nginx.conf
+
+# TLS certificates and private keys
+*.key
+*.crt
+*.csr
+*.pem
+
+# Downloaded binaries and archives
+*.tar.gz
+darwin-arm64/
